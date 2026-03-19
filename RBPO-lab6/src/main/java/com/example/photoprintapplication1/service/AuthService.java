@@ -2,10 +2,8 @@ package com.example.photoprintapplication1.service;
 
 import com.example.photoprintapplication1.dto.RegisterRequest;
 import com.example.photoprintapplication1.models.User;
-import com.example.photoprintapplication1.models.Customer;
 import com.example.photoprintapplication1.models.Role;
 import com.example.photoprintapplication1.repository.UserRepository;
-import com.example.photoprintapplication1.repository.CustomerRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -17,9 +15,6 @@ public class AuthService {
 
     @Autowired
     private UserRepository userRepository;
-
-    @Autowired
-    private CustomerRepository customerRepository;
 
     @Autowired
     private PasswordEncoder passwordEncoder;
@@ -46,15 +41,6 @@ public class AuthService {
         user.setEmail(request.getEmail());
         user.setPassword(passwordEncoder.encode(request.getPassword()));
         user.setRole(Role.USER);
-
-        Customer customer = new Customer();
-        customer.setFirstName(request.getFirstName());
-        customer.setLastName(request.getLastName());
-        customer.setPhone(request.getPhone());
-        customer.setEmail(request.getEmail());
-        customer.setUser(user);
-
-        user.setCustomer(customer);
 
         userRepository.save(user);
         return "User registered successfully";

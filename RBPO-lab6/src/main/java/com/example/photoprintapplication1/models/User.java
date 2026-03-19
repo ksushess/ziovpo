@@ -12,6 +12,10 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "owner_id")
+    private User owner;  // владелец лицензии (админ или компания)
+
     @Column(unique = true)
     private String username;
 
@@ -26,12 +30,6 @@ public class User {
     private LocalDateTime createdAt = LocalDateTime.now();
 
     private boolean enabled = true;
-
-    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL)
-    private Customer customer;
-
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
-    private List<Order> orders = new ArrayList<>();
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
     private List<UserSession> sessions = new ArrayList<>();
@@ -58,12 +56,9 @@ public class User {
     public boolean isEnabled() { return enabled; }
     public void setEnabled(boolean enabled) { this.enabled = enabled; }
 
-    public Customer getCustomer() { return customer; }
-    public void setCustomer(Customer customer) { this.customer = customer; }
-
-    public List<Order> getOrders() { return orders; }
-    public void setOrders(List<Order> orders) { this.orders = orders; }
-
     public List<UserSession> getSessions() { return sessions; }
     public void setSessions(List<UserSession> sessions) { this.sessions = sessions; }
+
+    public User getOwner() { return owner; }
+    public void setOwner(User owner) { this.owner = owner; }
 }
