@@ -94,6 +94,18 @@
 			<scope>runtime</scope>
 		</dependency>
 
+		<dependency>
+			<groupId>me.paulschwarz</groupId>
+			<artifactId>spring-dotenv</artifactId>
+			<version>4.0.0</version>
+		</dependency>
+
+		<dependency>
+			<groupId>com.fasterxml.jackson.datatype</groupId>
+			<artifactId>jackson-datatype-jsr310</artifactId>
+			<version>2.15.2</version>
+		</dependency>
+
 	</dependencies>
 
 	<build>
@@ -102,6 +114,19 @@
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
 			</plugin>
+
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>exec-maven-plugin</artifactId>
+				<version>3.1.0</version>
+				<configuration>
+					<mainClass>com.example.photoprintapplication1.PhotoprintApplication</mainClass>
+					<environmentVariables>
+						<KEYSTORE_PASSWORD>${env.KEYSTORE_PASSWORD}</KEYSTORE_PASSWORD>
+					</environmentVariables>
+				</configuration>
+			</plugin>
+
 		</plugins>
 	</build>
 

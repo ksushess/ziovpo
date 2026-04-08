@@ -6,5 +6,5 @@ import java.util.Optional;
 
 public interface LicenseRepository extends JpaRepository<License, Long> {
     Optional<License> findByCode(String code);
-    Optional<License> findByDeviceLicensesDeviceId(Long deviceId);
+    Optional<License> findFirstByDeviceLicensesDeviceIdOrderByEndingDateDesc(Long deviceId);
 }

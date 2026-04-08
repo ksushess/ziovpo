@@ -1,5 +1,6 @@
 package com.example.photoprintapplication1.models;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -7,6 +8,14 @@ import java.util.List;
 
 @Entity
 @Table(name = "license")
+@JsonIgnoreProperties({
+        "product",
+        "deviceLicenses",
+        "history",
+        "user",
+        "owner",
+        "type"
+})
 public class License {
 
     @Id
@@ -49,11 +58,9 @@ public class License {
     @OneToMany(mappedBy = "license", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<LicenseHistory> history = new ArrayList<>();
 
-    // Конструкторы
     public License() {
     }
 
-    // Геттеры и сеттеры (все вручную)
     public Long getId() {
         return id;
     }
@@ -184,11 +191,11 @@ public class License {
                 ", userId=" + (user != null ? user.getId() : null) +
                 ", productId=" + (product != null ? product.getId() : null) +
                 ", typeId=" + (type != null ? type.getId() : null) +
+                ", ownerId=" + (owner != null ? owner.getId() : null) +
                 ", firstActivationDate=" + firstActivationDate +
                 ", endingDate=" + endingDate +
                 ", blocked=" + blocked +
                 ", deviceCount=" + deviceCount +
-                ", ownerId=" + (owner != null ? owner.getId() : null) +
                 ", createdAt=" + createdAt +
                 '}';
     }

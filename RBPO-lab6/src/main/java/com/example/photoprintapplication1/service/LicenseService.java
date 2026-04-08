@@ -15,9 +15,10 @@ import com.example.photoprintapplication1.dto.RenewLicenseRequest;
 import com.example.photoprintapplication1.dto.CheckLicenseRequest;
 import com.example.photoprintapplication1.dto.ActivateLicenseRequest;
 import com.example.photoprintapplication1.service.SignatureService;
+import com.example.photoprintapplication1.repository.DeviceLicenseRepository;
 
-import java.time.Duration;
 import java.time.LocalDateTime;
+import java.time.Duration;
 import java.util.UUID;
 
 @Service
@@ -81,28 +82,48 @@ public class LicenseService {
         License license = licenseRepository.findByCode(request.getActivationKey())
                 .orElseThrow(() -> new RuntimeException("License not found"));
 
-        if (license.getUser() != null) {
-            throw new RuntimeException("License already activated");
+        // Проверка: лицензия не должна быть уже активирована другим пользователем
+        if (license.getUser() != null && !license.getUser().getId().equals(userId)) {
+            throw new RuntimeException("License already activated by another user");
+        }
+
+        // Если это первая активация — проверяем, что пользователь является владельцем или админом
+        if (license.getUser() == null && !license.getOwner().getId().equals(userId) && !"ADMIN".equals(user.getRole())) {
+            throw new RuntimeException("Only owner or admin can activate this license");
         }
 
         Device device = deviceRepository.findByMacAddress(request.getDeviceMac())
                 .orElseGet(() -> {
-                    Device newDevice = new Device();
-                    newDevice.setName(request.getDeviceName());
-                    newDevice.setMacAddress(request.getDeviceMac());
-                    newDevice.setUser(user);
-                    return deviceRepository.save(newDevice);
+                    Device d = new Device();
+                    d.setName(request.getDeviceName());
+                    d.setMacAddress(request.getDeviceMac());
+                    d.setUser(user);
+                    return deviceRepository.save(d);
                 });
+        // есть ли уже связь этой лицензии с этим устройством
+        boolean alreadyActivatedOnThisDevice = deviceLicenseRepository.existsByLicenseIdAndDeviceId(license.getId(), device.getId());
+        if (alreadyActivatedOnThisDevice) {
+            throw new RuntimeException("License already activated on this device");
+        }
 
-        if (license.getDeviceCount() >= 5) {
+        // Лимит устройств
+        long currentCount = deviceLicenseRepository.countByLicenseId(license.getId());
+        if (currentCount >= 5) {
             throw new RuntimeException("Device limit reached");
         }
 
-        license.setUser(user);
-        license.setFirstActivationDate(LocalDateTime.now());
-        license.setEndingDate(LocalDateTime.now().plusDays(license.getType().getDefaultDurationInDays()));
-        license.setDeviceCount(license.getDeviceCount() + 1);
+        // Активация
+        if (license.getUser() == null) {  // первая активация
+            license.setUser(user);
+            license.setFirstActivationDate(LocalDateTime.now());
+            license.setEndingDate(LocalDateTime.now().plusDays(license.getType().getDefaultDurationInDays()));
+        }
 
+        license.setDeviceCount((int) currentCount + 1);
+
+        license = licenseRepository.save(license);
+
+        // Связь устройство-лицензия
         DeviceLicense dl = new DeviceLicense();
         dl.setLicense(license);
         dl.setDevice(device);
@@ -111,8 +132,7 @@ public class LicenseService {
 
         license.getDeviceLicenses().add(dl);
 
-        licenseRepository.save(license);
-
+        // История
         LicenseHistory history = new LicenseHistory();
         history.setLicense(license);
         history.setUser(user);
@@ -128,24 +148,33 @@ public class LicenseService {
 
     @Transactional(readOnly = true)
     public TicketResponse checkLicense(CheckLicenseRequest request) throws Exception {
+        // Находим устройство по MAC
         Device device = deviceRepository.findByMacAddress(request.getDeviceMac())
-                .orElseThrow(() -> new RuntimeException("Device not found"));
+                .orElseThrow(() -> new RuntimeException("Device not found with MAC: " + request.getDeviceMac()));
 
-        License license = licenseRepository.findByDeviceLicensesDeviceId(device.getId())
-                .orElseThrow(() -> new RuntimeException("License not found"));
+        // Ищем самую актуальную (не просроченную) лицензию для этого устройства
+        License license = licenseRepository.findFirstByDeviceLicensesDeviceIdOrderByEndingDateDesc(device.getId())
+                .orElseThrow(() -> new RuntimeException("No active license found for this device"));
 
+        // Проверки согласно логике задания
         if (license.isBlocked()) {
             throw new RuntimeException("License is blocked");
         }
 
         if (license.getEndingDate() == null || license.getEndingDate().isBefore(LocalDateTime.now())) {
-            throw new RuntimeException("License expired");
+            throw new RuntimeException("License has expired");
+        }
+
+        // Важная проверка: лицензия должна быть привязана к пользователю устройства
+        if (license.getUser() == null) {
+            throw new RuntimeException("License is not activated yet");
         }
 
         if (!license.getUser().getId().equals(device.getUser().getId())) {
             throw new RuntimeException("License not bound to this user");
         }
 
+        // Формируем тикет и подпись
         Ticket ticket = buildTicket(license);
         String signature = signatureService.signTicket(ticket);
 
@@ -155,29 +184,31 @@ public class LicenseService {
     @Transactional
     public TicketResponse renewLicense(RenewLicenseRequest request, Long userId) throws Exception {
         User user = userRepository.findById(userId)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
 
         License license = licenseRepository.findByCode(request.getCode())
-                .orElseThrow(() -> new RuntimeException("License not found"));
+                .orElseThrow(() -> new RuntimeException("License not found with code: " + request.getCode()));
 
-        if (!license.getUser().getId().equals(userId) && !user.getRole().equals("ADMIN")) {
+        // Проверка прав
+        if (!license.getUser().getId().equals(userId) && !"ADMIN".equals(user.getRole())) {
             throw new RuntimeException("Not allowed to renew this license");
         }
 
+        // продлевать можно, если осталось не больше 7 дней
         if (license.getEndingDate() == null || license.getEndingDate().isAfter(LocalDateTime.now().plusDays(7))) {
-            throw new RuntimeException("Renewal not allowed (more than 7 days left or not activated)");
+            throw new RuntimeException("Renewal not allowed (more than 7 days left)");
         }
 
         long daysToAdd = license.getType().getDefaultDurationInDays();
-        license.setEndingDate(license.getEndingDate().plusDays(daysToAdd));
 
+        license.setEndingDate(license.getEndingDate().plusDays(daysToAdd));
         licenseRepository.save(license);
 
         LicenseHistory history = new LicenseHistory();
         history.setLicense(license);
         history.setUser(user);
         history.setStatus("RENEWED");
-        history.setDescription("Лицензия продлена на " + daysToAdd + " дней пользователем " + user.getUsername());
+        history.setDescription("Лицензия продлена на " + daysToAdd + " дней");
         historyRepository.save(history);
 
         Ticket ticket = buildTicket(license);
@@ -188,12 +219,12 @@ public class LicenseService {
 
     private Ticket buildTicket(License license) {
         Ticket ticket = new Ticket();
-        ticket.setCurrentDate(LocalDateTime.now());
-        ticket.setTicketLifetime(Duration.ofHours(24));
-        ticket.setActivationDate(license.getFirstActivationDate());
-        ticket.setExpirationDate(license.getEndingDate());
-        ticket.setUserId(license.getUser().getId());
-        ticket.setDeviceId(license.getDeviceLicenses().get(0).getDevice().getId());
+        ticket.setCurrentDate(LocalDateTime.now().toString());
+        ticket.setTicketLifetime("24h");
+        ticket.setActivationDate(license.getFirstActivationDate() != null ? license.getFirstActivationDate().toString() : null);
+        ticket.setExpirationDate(license.getEndingDate() != null ? license.getEndingDate().toString() : null);
+        ticket.setUserId(license.getUser() != null ? license.getUser().getId() : null);
+        ticket.setDeviceId(!license.getDeviceLicenses().isEmpty() ? license.getDeviceLicenses().get(0).getDevice().getId() : null);
         ticket.setBlocked(license.isBlocked());
         return ticket;
     }
