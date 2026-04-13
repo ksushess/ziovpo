@@ -2,9 +2,9 @@ name: CI Pipeline
 
 on:
   push:
-    branches: [ main, master, lab6 ]
+    branches: [ main, master, zadanie2, lab6 ]
   pull_request:
-    branches: [ main ]
+    branches: [ main, master ]
 
 jobs:
   build-and-test:
@@ -50,31 +50,33 @@ jobs:
               hibernate:
                 ddl-auto: create-drop
               show-sql: false
-          
+            sql:
+              init:
+                mode: never
+
           server:
-            port: 8081 
+            port: 8081
             ssl:
-              enabled: false  
-          
+              enabled: false
+
           logging:
             level:
               root: WARN
               org.springframework: WARN
-              com.example: DEBUG
+              com.example.photoprintapplication1: DEBUG
           EOF
-          
+
           echo "Test configuration created successfully"
 
       - name: Wait for PostgreSQL
         run: |
-         
           echo "Waiting for PostgreSQL to start..."
-          for i in {1..10}; do
+          for i in {1..15}; do
             if pg_isready -h localhost -p 5432 -U postgres; then
               echo "PostgreSQL is ready!"
               exit 0
             fi
-            echo "PostgreSQL not ready yet... (attempt $i/10)"
+            echo "PostgreSQL not ready yet... (attempt $i/15)"
             sleep 3
           done
           echo "PostgreSQL failed to start"
@@ -85,16 +87,15 @@ jobs:
         env:
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
 
-
       - name: Build JAR
         if: success()
-        run: mvn -B clean package
+        run: mvn -B clean package -DskipTests
         env:
           KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
 
       - name: List build artifacts
         run: |
-          echo " Build artifacts:"
+          echo "Build artifacts:"
           ls -la target/*.jar 2>/dev/null || echo "No JAR files found"
 
       - name: Upload JAR artifact
@@ -103,14 +104,4 @@ jobs:
         with:
           name: photoprint-application
           path: target/*.jar
-          retention-days: 7
-
-      - name: Upload test reports (for debugging)
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: test-reports-ci
-          path: |
-            target/surefire-reports/
-            target/failsafe-reports/
           retention-days: 7
