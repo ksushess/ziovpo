@@ -36,7 +36,7 @@ jobs:
           distribution: 'temurin'
           cache: 'maven'
 
-      - name: Create test configuration (override SSL and HTTPS)
+      - name: Create test configuration (force disable SSL + HTTPS for tests only)
         run: |
           mkdir -p src/test/resources
           cat > src/test/resources/application-ci.yml << 'EOF'
@@ -51,19 +51,20 @@ jobs:
                 ddl-auto: create-drop
               show-sql: false
 
+          # Полностью отключаем SSL и HTTPS только для тестов
           server:
             port: 8081
             ssl:
               enabled: false
 
-          # Отключаем HTTPS и keystore для тестов
+          # Отключаем keystore для тестового контекста
           spring:
             ssl:
               enabled: false
 
-          # JWT и Signature — минимальные настройки
+          # Минимальные настройки JWT и Signature (чтобы не падало)
           jwt:
-            secret: testSecretKeyForCIOnly1234567890
+            secret: testSecretKeyForCI1234567890abcdefghijklmnopqrstuvwxyz
 
           signature:
             private-key-path: classpath:certs/keystore.p12
@@ -73,13 +74,14 @@ jobs:
           logging:
             level:
               root: WARN
-              org.springframework: WARN
+              org.springframework: ERROR
+              org.hibernate: ERROR
               com.example.photoprintapplication1: INFO
           EOF
 
       - name: Wait for PostgreSQL
         run: |
-          echo "Waiting for PostgreSQL..."
+          echo "Waiting for PostgreSQL to start..."
           for i in {1..15}; do
             if pg_isready -h localhost -p 5432 -U postgres; then
               echo "PostgreSQL is ready!"
@@ -97,11 +99,11 @@ jobs:
           KEYSTORE_PASSWORD: changeit
           SPRING_PROFILES_ACTIVE: ci
 
-      - name: Build JAR (skip tests)
+      - name: Build JAR (skip tests on build)
         if: success()
         run: mvn -B clean package -DskipTests
 
-      - name: List build artifacts
+      - name: List artifacts
         run: ls -la target/*.jar || echo "No JAR found"
 
       - name: Upload JAR artifact
