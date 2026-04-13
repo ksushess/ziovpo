@@ -4,7 +4,7 @@ on:
   push:
     branches: [ main, master, zadanie2 ]
   pull_request:
-    branches: [ main, master ]
+    branches: [ main, master, zadanie2 ]
 
 jobs:
   build-and-test:
@@ -36,7 +36,7 @@ jobs:
           distribution: 'temurin'
           cache: 'maven'
 
-      - name: Create test configuration
+      - name: Create test configuration (override SSL and HTTPS)
         run: |
           mkdir -p src/test/resources
           cat > src/test/resources/application-ci.yml << 'EOF'
@@ -50,53 +50,59 @@ jobs:
               hibernate:
                 ddl-auto: create-drop
               show-sql: false
-            sql:
-              init:
-                mode: never
 
           server:
             port: 8081
             ssl:
               enabled: false
 
+          # Отключаем HTTPS и keystore для тестов
+          spring:
+            ssl:
+              enabled: false
+
+          # JWT и Signature — минимальные настройки
+          jwt:
+            secret: testSecretKeyForCIOnly1234567890
+
+          signature:
+            private-key-path: classpath:certs/keystore.p12
+            keystore-password: changeit
+            alias: server-1bib23336
+
           logging:
             level:
               root: WARN
               org.springframework: WARN
-              com.example.photoprintapplication1: DEBUG
+              com.example.photoprintapplication1: INFO
           EOF
-
-          echo "Test configuration created successfully"
 
       - name: Wait for PostgreSQL
         run: |
-          echo "Waiting for PostgreSQL to start..."
+          echo "Waiting for PostgreSQL..."
           for i in {1..15}; do
             if pg_isready -h localhost -p 5432 -U postgres; then
               echo "PostgreSQL is ready!"
               exit 0
             fi
-            echo "PostgreSQL not ready yet... (attempt $i/15)"
+            echo "Attempt $i/15..."
             sleep 3
           done
           echo "PostgreSQL failed to start"
           exit 1
 
-      - name: Run tests
+      - name: Run tests with CI profile
         run: mvn -B clean test -Dspring.profiles.active=ci
         env:
-          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEYSTORE_PASSWORD: changeit
+          SPRING_PROFILES_ACTIVE: ci
 
-      - name: Build JAR
+      - name: Build JAR (skip tests)
         if: success()
         run: mvn -B clean package -DskipTests
-        env:
-          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
 
       - name: List build artifacts
-        run: |
-          echo "Build artifacts:"
-          ls -la target/*.jar 2>/dev/null || echo "No JAR files found"
+        run: ls -la target/*.jar || echo "No JAR found"
 
       - name: Upload JAR artifact
         if: success()
