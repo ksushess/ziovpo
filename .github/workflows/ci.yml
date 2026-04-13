@@ -36,7 +36,7 @@ jobs:
           distribution: 'temurin'
           cache: 'maven'
 
-      - name: Create test configuration (force disable SSL + HTTPS for tests only)
+      - name: Create test configuration (disable SSL completely for tests)
         run: |
           mkdir -p src/test/resources
           cat > src/test/resources/application-ci.yml << 'EOF'
@@ -50,21 +50,17 @@ jobs:
               hibernate:
                 ddl-auto: create-drop
               show-sql: false
+            ssl:
+              enabled: false
 
-          # Полностью отключаем SSL и HTTPS только для тестов
           server:
             port: 8081
             ssl:
               enabled: false
 
-          # Отключаем keystore для тестового контекста
-          spring:
-            ssl:
-              enabled: false
-
-          # Минимальные настройки JWT и Signature (чтобы не падало)
+          # Минимальные настройки для JWT и Signature (чтобы не падало)
           jwt:
-            secret: testSecretKeyForCI1234567890abcdefghijklmnopqrstuvwxyz
+            secret: testSecretKeyForCIOnly1234567890
 
           signature:
             private-key-path: classpath:certs/keystore.p12
@@ -76,12 +72,12 @@ jobs:
               root: WARN
               org.springframework: ERROR
               org.hibernate: ERROR
-              com.example.photoprintapplication1: INFO
+              com.example: INFO
           EOF
 
       - name: Wait for PostgreSQL
         run: |
-          echo "Waiting for PostgreSQL to start..."
+          echo "Waiting for PostgreSQL..."
           for i in {1..15}; do
             if pg_isready -h localhost -p 5432 -U postgres; then
               echo "PostgreSQL is ready!"
@@ -99,7 +95,7 @@ jobs:
           KEYSTORE_PASSWORD: changeit
           SPRING_PROFILES_ACTIVE: ci
 
-      - name: Build JAR (skip tests on build)
+      - name: Build JAR
         if: success()
         run: mvn -B clean package -DskipTests
 
