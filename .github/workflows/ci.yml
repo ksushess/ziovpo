@@ -1,0 +1,116 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches: [ main, master, zadanie2, zadanie3 ]
+  pull_request:
+    branches: [ main, master, zadanie2, zadanie3 ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_DB: photoprint
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: password
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: 'maven'
+
+      - name: Install PostgreSQL client
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+
+      - name: Create test configuration
+        run: |
+          mkdir -p src/test/resources
+          cat > src/test/resources/application-ci.yml << 'EOF'
+          spring:
+            datasource:
+              url: jdbc:postgresql://localhost:5432/photoprint
+              username: postgres
+              password: password
+              driver-class-name: org.postgresql.Driver
+            jpa:
+              hibernate:
+                ddl-auto: create-drop
+            ssl:
+              enabled: false
+
+          server:
+            port: 8081
+            ssl:
+              enabled: false
+
+          jwt:
+            secret: ${JWT_SECRET}
+
+          signature:
+            keystore.path: classpath:certs/signature/signature-keystore.p12
+            keystore.password: ${SIGNATURE_KEYSTORE_PASSWORD}
+            key.alias: signature-key-1bib23336
+            public-key: ${SIGNATURE_PUBLIC_KEY}
+
+          logging:
+            level:
+              root: WARN
+              org.springframework: ERROR
+          EOF
+
+      - name: Wait for PostgreSQL
+        run: |
+          echo "Waiting for PostgreSQL..."
+          for i in {1..15}; do
+            if pg_isready -h localhost -p 5432 -U postgres; then
+              echo "PostgreSQL is ready!"
+              exit 0
+            fi
+            echo "Attempt $i/15..."
+            sleep 3
+          done
+          echo "PostgreSQL failed to start"
+          exit 1
+
+      - name: Run tests with CI profile
+        run: mvn -B clean test -Dspring.profiles.active=ci
+        env:
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          SIGNATURE_KEYSTORE_PASSWORD: ${{ secrets.SIGNATURE_KEYSTORE_PASSWORD }}
+          SIGNATURE_PUBLIC_KEY: ${{ secrets.SIGNATURE_PUBLIC_KEY }}
+
+      - name: Build JAR
+        if: success()
+        run: mvn -B clean package -DskipTests
+        env:
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          SIGNATURE_KEYSTORE_PASSWORD: ${{ secrets.SIGNATURE_KEYSTORE_PASSWORD }}
+          SIGNATURE_PUBLIC_KEY: ${{ secrets.SIGNATURE_PUBLIC_KEY }}
+
+      - name: List artifacts
+        run: ls -la target/*.jar || echo "No JAR found"
+
+      - name: Upload JAR artifact
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: photoprint-application
+          path: target/*.jar
+          retention-days: 7

@@ -1,0 +1,88 @@
+package com.example.photoprintapplication1.service;
+
+import com.example.photoprintapplication1.dto.Ticket;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.Resource;
+import org.springframework.stereotype.Service;
+
+import java.io.ByteArrayInputStream;
+import java.nio.charset.StandardCharsets;
+import java.security.*;
+import java.security.cert.Certificate;
+import java.security.cert.CertificateFactory;
+import java.util.Base64;
+
+@Service
+public class SignatureService {
+
+    private final PrivateKey privateKey;
+    private final PublicKey publicKey;
+    private final ObjectMapper objectMapper = new ObjectMapper();
+
+    public SignatureService(
+            @Value("${signature.keystore.path}") Resource keystoreResource,
+            @Value("${signature.keystore.password}") String keystorePassword,
+            @Value("${signature.key.alias}") String alias,
+            @Value("${signature.public-key:}") String publicKeyBase64) {
+
+        try {
+            // Загружаем keystore
+            KeyStore keystore = KeyStore.getInstance("PKCS12");
+            try (var is = keystoreResource.getInputStream()) {
+                keystore.load(is, keystorePassword.toCharArray());
+            }
+
+            // Получаем приватный ключ для подписи
+            KeyStore.PrivateKeyEntry entry = (KeyStore.PrivateKeyEntry) keystore.getEntry(
+                    alias, new KeyStore.PasswordProtection(keystorePassword.toCharArray())
+            );
+
+            this.privateKey = entry.getPrivateKey();
+
+            // Определяем публичный ключ
+            if (publicKeyBase64 != null && !publicKeyBase64.isEmpty() && !publicKeyBase64.isBlank()) {
+                // Если публичный ключ передан через свойства (из GitHub Secrets)
+                // Очищаем от PEM-обертки (BEGIN/END и пробелов)
+                String cleanedKey = publicKeyBase64
+                        .replace("-----BEGIN CERTIFICATE-----", "")
+                        .replace("-----END CERTIFICATE-----", "")
+                        .replaceAll("\\s", "");
+
+                byte[] certBytes = Base64.getDecoder().decode(cleanedKey);
+                CertificateFactory certFactory = CertificateFactory.getInstance("X.509");
+                Certificate cert = certFactory.generateCertificate(new ByteArrayInputStream(certBytes));
+                this.publicKey = cert.getPublicKey();
+            } else {
+                // Иначе берём из keystore (для локальной работы)
+                Certificate cert = keystore.getCertificate(alias);
+                this.publicKey = cert.getPublicKey();
+            }
+
+        } catch (Exception e) {
+            throw new RuntimeException("Не удалось инициализировать SignatureService", e);
+        }
+    }
+
+    public String signTicket(Ticket ticket) throws Exception {
+        String json = objectMapper.writeValueAsString(ticket);
+
+        Signature signature = Signature.getInstance("SHA256withRSA");
+        signature.initSign(privateKey);
+        signature.update(json.getBytes(StandardCharsets.UTF_8));
+
+        byte[] signed = signature.sign();
+        return Base64.getEncoder().encodeToString(signed);
+    }
+
+    public boolean verifyTicket(Ticket ticket, String signatureBase64) throws Exception {
+        String json = objectMapper.writeValueAsString(ticket);
+
+        Signature signature = Signature.getInstance("SHA256withRSA");
+        signature.initVerify(publicKey);
+        signature.update(json.getBytes(StandardCharsets.UTF_8));
+
+        byte[] sigBytes = Base64.getDecoder().decode(signatureBase64);
+        return signature.verify(sigBytes);
+    }
+}
