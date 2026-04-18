@@ -1,0 +1,248 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="2ceae3f5-42bd-4499-971d-38230042b9a6" name="Changes" comment="zadanie3">
+      <change beforePath="$PROJECT_DIR$/src/main/resources/application.properties" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/resources/application.properties" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_BRANCH_BY_REPOSITORY">
+      <map>
+        <entry key="$PROJECT_DIR$" value="zadanie2" />
+      </map>
+    </option>
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="MarkdownSettingsMigration">
+    <option name="stateVersion" value="1" />
+  </component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 4
+}</component>
+  <component name="ProjectId" id="3ADiB9q1lOgBss68WlPxn3c08CM" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;zadanie3&quot;,
+    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
+    &quot;last_opened_file_path&quot;: &quot;C:/Users/bochk/Downloads/ziopvo&quot;
+  }
+}</component>
+  <component name="RecentsManager">
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="C:\Users\bochk\Downloads\ziopvo" />
+    </key>
+  </component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="2ceae3f5-42bd-4499-971d-38230042b9a6" name="Changes" comment="" />
+      <created>1772133403824</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1772133403824</updated>
+    </task>
+    <task id="LOCAL-00001" summary="zadanie2">
+      <option name="closed" value="true" />
+      <created>1773949627039</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1773949627039</updated>
+    </task>
+    <task id="LOCAL-00002" summary="fix ci">
+      <option name="closed" value="true" />
+      <created>1776105539032</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1776105539032</updated>
+    </task>
+    <task id="LOCAL-00003" summary="fix">
+      <option name="closed" value="true" />
+      <created>1776106596139</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1776106596139</updated>
+    </task>
+    <task id="LOCAL-00004" summary="fix CI">
+      <option name="closed" value="true" />
+      <created>1776106831863</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1776106831863</updated>
+    </task>
+    <task id="LOCAL-00005" summary="опять fix CI">
+      <option name="closed" value="true" />
+      <created>1776107000647</created>
+      <option name="number" value="00005" />
+      <option name="presentableId" value="LOCAL-00005" />
+      <option name="project" value="LOCAL" />
+      <updated>1776107000647</updated>
+    </task>
+    <task id="LOCAL-00006" summary="fix CI">
+      <option name="closed" value="true" />
+      <created>1776107294418</created>
+      <option name="number" value="00006" />
+      <option name="presentableId" value="LOCAL-00006" />
+      <option name="project" value="LOCAL" />
+      <updated>1776107294418</updated>
+    </task>
+    <task id="LOCAL-00007" summary="zadanie3">
+      <option name="closed" value="true" />
+      <created>1776109988298</created>
+      <option name="number" value="00007" />
+      <option name="presentableId" value="LOCAL-00007" />
+      <option name="project" value="LOCAL" />
+      <updated>1776109988298</updated>
+    </task>
+    <task id="LOCAL-00008" summary="zadanie3 fix ci">
+      <option name="closed" value="true" />
+      <created>1776110315615</created>
+      <option name="number" value="00008" />
+      <option name="presentableId" value="LOCAL-00008" />
+      <option name="project" value="LOCAL" />
+      <updated>1776110315615</updated>
+    </task>
+    <task id="LOCAL-00009" summary="zadanie3 fix ci">
+      <option name="closed" value="true" />
+      <created>1776110871044</created>
+      <option name="number" value="00009" />
+      <option name="presentableId" value="LOCAL-00009" />
+      <option name="project" value="LOCAL" />
+      <updated>1776110871044</updated>
+    </task>
+    <task id="LOCAL-00010" summary="zadanie3 fix">
+      <option name="closed" value="true" />
+      <created>1776185802771</created>
+      <option name="number" value="00010" />
+      <option name="presentableId" value="LOCAL-00010" />
+      <option name="project" value="LOCAL" />
+      <updated>1776185802771</updated>
+    </task>
+    <task id="LOCAL-00011" summary="zadanie3 fix">
+      <option name="closed" value="true" />
+      <created>1776186031312</created>
+      <option name="number" value="00011" />
+      <option name="presentableId" value="LOCAL-00011" />
+      <option name="project" value="LOCAL" />
+      <updated>1776186031312</updated>
+    </task>
+    <task id="LOCAL-00012" summary="zadanie3 fix">
+      <option name="closed" value="true" />
+      <created>1776186613268</created>
+      <option name="number" value="00012" />
+      <option name="presentableId" value="LOCAL-00012" />
+      <option name="project" value="LOCAL" />
+      <updated>1776186613268</updated>
+    </task>
+    <task id="LOCAL-00013" summary="zadanie3 fix">
+      <option name="closed" value="true" />
+      <created>1776187026865</created>
+      <option name="number" value="00013" />
+      <option name="presentableId" value="LOCAL-00013" />
+      <option name="project" value="LOCAL" />
+      <updated>1776187026865</updated>
+    </task>
+    <task id="LOCAL-00014" summary="zadanie3 fix">
+      <option name="closed" value="true" />
+      <created>1776187322204</created>
+      <option name="number" value="00014" />
+      <option name="presentableId" value="LOCAL-00014" />
+      <option name="project" value="LOCAL" />
+      <updated>1776187322204</updated>
+    </task>
+    <task id="LOCAL-00015" summary="zadanie3 fix">
+      <option name="closed" value="true" />
+      <created>1776188201964</created>
+      <option name="number" value="00015" />
+      <option name="presentableId" value="LOCAL-00015" />
+      <option name="project" value="LOCAL" />
+      <updated>1776188201964</updated>
+    </task>
+    <task id="LOCAL-00016" summary="zadanie3 fix">
+      <option name="closed" value="true" />
+      <created>1776188409150</created>
+      <option name="number" value="00016" />
+      <option name="presentableId" value="LOCAL-00016" />
+      <option name="project" value="LOCAL" />
+      <updated>1776188409150</updated>
+    </task>
+    <task id="LOCAL-00017" summary="zadanie3 fix">
+      <option name="closed" value="true" />
+      <created>1776188810327</created>
+      <option name="number" value="00017" />
+      <option name="presentableId" value="LOCAL-00017" />
+      <option name="project" value="LOCAL" />
+      <updated>1776188810327</updated>
+    </task>
+    <task id="LOCAL-00018" summary="zadanie3 fix">
+      <option name="closed" value="true" />
+      <created>1776189108386</created>
+      <option name="number" value="00018" />
+      <option name="presentableId" value="LOCAL-00018" />
+      <option name="project" value="LOCAL" />
+      <updated>1776189108386</updated>
+    </task>
+    <task id="LOCAL-00019" summary="zadanie3 fix">
+      <option name="closed" value="true" />
+      <created>1776189941346</created>
+      <option name="number" value="00019" />
+      <option name="presentableId" value="LOCAL-00019" />
+      <option name="project" value="LOCAL" />
+      <updated>1776189941346</updated>
+    </task>
+    <task id="LOCAL-00020" summary="zadanie3">
+      <option name="closed" value="true" />
+      <created>1776190266432</created>
+      <option name="number" value="00020" />
+      <option name="presentableId" value="LOCAL-00020" />
+      <option name="project" value="LOCAL" />
+      <updated>1776190266432</updated>
+    </task>
+    <option name="localTasksCounter" value="21" />
+    <servers />
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State>
+              <option name="CUSTOM_BOOLEAN_PROPERTIES">
+                <map>
+                  <entry key="Show.Git.Branches" value="false" />
+                </map>
+              </option>
+            </State>
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="zadanie2" />
+    <MESSAGE value="fix ci" />
+    <MESSAGE value="fix" />
+    <MESSAGE value="опять fix CI" />
+    <MESSAGE value="fix CI" />
+    <MESSAGE value="zadanie3 fix ci" />
+    <MESSAGE value="zadanie3 fix" />
+    <MESSAGE value="zadanie3" />
+    <option name="LAST_COMMIT_MESSAGE" value="zadanie3" />
+  </component>
+</project>
