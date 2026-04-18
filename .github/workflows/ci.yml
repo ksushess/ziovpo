@@ -62,7 +62,7 @@ jobs:
 
           signature:
             keystore.path: classpath:certs/signature/signature-keystore.p12
-            keystore.password: changeit
+            keystore.password: ${{ secrets.KEYSTORE_PASSWORD }}
             key.alias: signature-key-1bib23336
 
           logging:
