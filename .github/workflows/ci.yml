@@ -109,3 +109,4 @@ jobs:
           name: photoprint-application
           path: target/*.jar
           retention-days: 7
+          
