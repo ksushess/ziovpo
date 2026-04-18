@@ -29,8 +29,7 @@ public class UserController {
                 "username", user.getUsername(),
                 "email", user.getEmail(),
                 "role", user.getRole().name(),
-                "createdAt", user.getCreatedAt(),
-                "customerId", user.getCustomer() != null ? user.getCustomer().getId() : null
+                "createdAt", user.getCreatedAt()
         ));
     }
 }
