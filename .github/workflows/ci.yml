@@ -2,9 +2,9 @@ name: CI Pipeline
 
 on:
   push:
-    branches: [ main, master ]
+    branches: [ main, master, zadanie2 ]
   pull_request:
-    branches: [ main, master ]
+    branches: [ main, master, zadanie2 ]
 
 jobs:
   build-and-test:
@@ -15,8 +15,8 @@ jobs:
         image: postgres:15
         env:
           POSTGRES_DB: photoprint
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: password
+          POSTGRES_USER: ${{ secrets.DB_USERNAME }}
+          POSTGRES_PASSWORD: ${{ secrets.DB_PASSWORD }}
         options: >-
           --health-cmd pg_isready
           --health-interval 10s
@@ -36,20 +36,19 @@ jobs:
           distribution: 'temurin'
           cache: 'maven'
 
-      - name: Create test configuration (disable SSL completely for tests)
+      - name: Create test configuration
         run: |
           mkdir -p src/test/resources
           cat > src/test/resources/application-ci.yml << 'EOF'
           spring:
             datasource:
               url: jdbc:postgresql://localhost:5432/photoprint
-              username: postgres
-              password: password
+              username: ${{ secrets.DB_USERNAME }}
+              password: ${{ secrets.DB_PASSWORD }}
               driver-class-name: org.postgresql.Driver
             jpa:
               hibernate:
                 ddl-auto: create-drop
-              show-sql: false
             ssl:
               enabled: false
 
@@ -58,54 +57,34 @@ jobs:
             ssl:
               enabled: false
 
-          # Минимальные настройки для JWT и Signature (чтобы не падало)
           jwt:
-            secret: testSecretKeyForCIOnly1234567890
+            secret: ${{ secrets.JWT_SECRET }}
 
           signature:
-            private-key-path: classpath:certs/keystore.p12
-            keystore-password: changeit
-            alias: server-1bib23336
+            keystore.path: classpath:certs/signature/signature-keystore.p12
+            keystore.password: changeit
+            key.alias: signature-key-1bib23336
 
           logging:
             level:
               root: WARN
               org.springframework: ERROR
-              org.hibernate: ERROR
-              com.example: INFO
           EOF
 
-      - name: Wait for PostgreSQL
-        run: |
-          echo "Waiting for PostgreSQL..."
-          for i in {1..15}; do
-            if pg_isready -h localhost -p 5432 -U postgres; then
-              echo "PostgreSQL is ready!"
-              exit 0
-            fi
-            echo "Attempt $i/15..."
-            sleep 3
-          done
-          echo "PostgreSQL failed to start"
-          exit 1
-
-      - name: Run tests with CI profile
+      - name: Run tests
         run: mvn -B clean test -Dspring.profiles.active=ci
         env:
-          KEYSTORE_PASSWORD: changeit
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          SIGNATURE_KEYSTORE_PASSWORD: ${{ secrets.SIGNATURE_KEYSTORE_PASSWORD }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          DB_USERNAME: ${{ secrets.DB_USERNAME }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
           SPRING_PROFILES_ACTIVE: ci
 
       - name: Build JAR
         if: success()
         run: mvn -B clean package -DskipTests
-
-      - name: List artifacts
-        run: ls -la target/*.jar || echo "No JAR found"
-
-      - name: Upload JAR artifact
-        if: success()
-        uses: actions/upload-artifact@v4
-        with:
-          name: photoprint-application
-          path: target/*.jar
-          retention-days: 7
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          SIGNATURE_KEYSTORE_PASSWORD: ${{ secrets.SIGNATURE_KEYSTORE_PASSWORD }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
