@@ -15,8 +15,8 @@ jobs:
         image: postgres:15
         env:
           POSTGRES_DB: photoprint
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: password
+          POSTGRES_USER: ${{ secrets.DB_USERNAME }}
+          POSTGRES_PASSWORD: ${{ secrets.DB_PASSWORD }}
         options: >-
           --health-cmd pg_isready
           --health-interval 10s
@@ -43,8 +43,8 @@ jobs:
           spring:
             datasource:
               url: jdbc:postgresql://localhost:5432/photoprint
-              username: postgres
-              password: password
+              username: ${DB_USERNAME}
+              password: ${DB_PASSWORD}
               driver-class-name: org.postgresql.Driver
             jpa:
               hibernate:
@@ -58,13 +58,12 @@ jobs:
             ssl:
               enabled: false
 
-          # Минимальные настройки для JWT и Signature (чтобы не падало)
           jwt:
-            secret: testSecretKeyForCIOnly1234567890
+            secret: ${JWT_SECRET}
 
           signature:
             private-key-path: classpath:certs/keystore.p12
-            keystore-password: changeit
+            keystore-password: ${KEYSTORE_PASSWORD}
             alias: server-1bib23336
 
           logging:
@@ -79,7 +78,7 @@ jobs:
         run: |
           echo "Waiting for PostgreSQL..."
           for i in {1..15}; do
-            if pg_isready -h localhost -p 5432 -U postgres; then
+            if pg_isready -h localhost -p 5432 -U ${{ secrets.DB_USERNAME }}; then
               echo "PostgreSQL is ready!"
               exit 0
             fi
@@ -92,12 +91,17 @@ jobs:
       - name: Run tests with CI profile
         run: mvn -B clean test -Dspring.profiles.active=ci
         env:
-          KEYSTORE_PASSWORD: changeit
+          DB_USERNAME: ${{ secrets.DB_USERNAME }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
           SPRING_PROFILES_ACTIVE: ci
 
       - name: Build JAR
         if: success()
         run: mvn -B clean package -DskipTests
+        env:
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
 
       - name: List artifacts
         run: ls -la target/*.jar || echo "No JAR found"
