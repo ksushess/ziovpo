@@ -27,41 +27,49 @@ public class SignatureService {
             @Value("${signature.public-key:}") String publicKeyBase64) {
 
         try {
-            // Загружаем keystore
             KeyStore keystore = KeyStore.getInstance("PKCS12");
             try (var is = keystoreResource.getInputStream()) {
                 keystore.load(is, keystorePassword.toCharArray());
             }
 
-            // Получаем приватный ключ для подписи
             KeyStore.PrivateKeyEntry entry = (KeyStore.PrivateKeyEntry) keystore.getEntry(
                     alias, new KeyStore.PasswordProtection(keystorePassword.toCharArray())
             );
 
             this.privateKey = entry.getPrivateKey();
 
-            // Определяем публичный ключ
-            if (publicKeyBase64 != null && !publicKeyBase64.isEmpty() && !publicKeyBase64.isBlank()) {
-                // Если публичный ключ передан через свойства (из GitHub Secrets)
-                // Очищаем от PEM-обертки (BEGIN/END и пробелов)
-                String cleanedKey = publicKeyBase64
-                        .replace("-----BEGIN CERTIFICATE-----", "")
-                        .replace("-----END CERTIFICATE-----", "")
-                        .replaceAll("\\s", "");
-
-                byte[] certBytes = Base64.getDecoder().decode(cleanedKey);
-                CertificateFactory certFactory = CertificateFactory.getInstance("X.509");
-                Certificate cert = certFactory.generateCertificate(new ByteArrayInputStream(certBytes));
-                this.publicKey = cert.getPublicKey();
+            if (publicKeyBase64 != null && !publicKeyBase64.isBlank()) {
+                this.publicKey = readPublicKeyFromProperty(publicKeyBase64);
             } else {
-                // Иначе берём из keystore (для локальной работы)
                 Certificate cert = keystore.getCertificate(alias);
                 this.publicKey = cert.getPublicKey();
             }
 
         } catch (Exception e) {
-            throw new RuntimeException("Не удалось инициализировать SignatureService", e);
+            throw new RuntimeException("Failed to initialize SignatureService", e);
         }
+    }
+
+    private PublicKey readPublicKeyFromProperty(String publicKeyValue) throws Exception {
+        String normalized = publicKeyValue
+                .trim()
+                .replace("\\n", "\n")
+                .replace("\r", "");
+
+        CertificateFactory certFactory = CertificateFactory.getInstance("X.509");
+        Certificate cert;
+
+        if (normalized.contains("-----BEGIN CERTIFICATE-----")) {
+            cert = certFactory.generateCertificate(
+                    new ByteArrayInputStream(normalized.getBytes(StandardCharsets.UTF_8))
+            );
+        } else {
+            String cleanedKey = normalized.replaceAll("\\s", "");
+            byte[] certBytes = Base64.getDecoder().decode(cleanedKey);
+            cert = certFactory.generateCertificate(new ByteArrayInputStream(certBytes));
+        }
+
+        return cert.getPublicKey();
     }
 
     public String signTicket(Ticket ticket) throws Exception {
