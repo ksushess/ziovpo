@@ -2,9 +2,9 @@ name: CI Pipeline
 
 on:
   push:
-    branches: [ main, master, zadanie2, zadanie3 ]
+    branches: [ main, master, zadanie2, zadanie3, zadanie4 ]
   pull_request:
-    branches: [ main, master, zadanie2, zadanie3 ]
+    branches: [ main, master, zadanie2, zadanie3, zadanie4 ]
 
 jobs:
   build-and-test:

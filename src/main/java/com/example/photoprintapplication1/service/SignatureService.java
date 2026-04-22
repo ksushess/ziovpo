@@ -1,6 +1,7 @@
 package com.example.photoprintapplication1.service;
 
 import com.example.photoprintapplication1.dto.Ticket;
+import com.example.photoprintapplication1.dto.MalwareSignatureSigningPayload;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
@@ -39,7 +40,7 @@ public class SignatureService {
             this.privateKey = entry.getPrivateKey();
 
             if (publicKeyBase64 != null && !publicKeyBase64.isBlank()) {
-                this.publicKey = readPublicKeyFromProperty(publicKeyBase64);
+                this.publicKey = tryReadPublicKeyOrFallback(publicKeyBase64, keystore, alias);
             } else {
                 Certificate cert = keystore.getCertificate(alias);
                 this.publicKey = cert.getPublicKey();
@@ -50,10 +51,24 @@ public class SignatureService {
         }
     }
 
+    private PublicKey tryReadPublicKeyOrFallback(String publicKeyValue, KeyStore keystore, String alias) throws Exception {
+        try {
+            return readPublicKeyFromProperty(publicKeyValue);
+        } catch (Exception ex) {
+            Certificate cert = keystore.getCertificate(alias);
+            if (cert == null) {
+                throw ex;
+            }
+            return cert.getPublicKey();
+        }
+    }
+
     private PublicKey readPublicKeyFromProperty(String publicKeyValue) throws Exception {
         String normalized = publicKeyValue
                 .trim()
+                .replace("\\\\n", "\n")
                 .replace("\\n", "\n")
+                .replace("\\\\r", "")
                 .replace("\r", "");
 
         CertificateFactory certFactory = CertificateFactory.getInstance("X.509");
@@ -73,14 +88,11 @@ public class SignatureService {
     }
 
     public String signTicket(Ticket ticket) throws Exception {
-        String json = objectMapper.writeValueAsString(ticket);
+        return signObject(ticket);
+    }
 
-        Signature signature = Signature.getInstance("SHA256withRSA");
-        signature.initSign(privateKey);
-        signature.update(json.getBytes(StandardCharsets.UTF_8));
-
-        byte[] signed = signature.sign();
-        return Base64.getEncoder().encodeToString(signed);
+    public String signMalwareSignature(MalwareSignatureSigningPayload payload) throws Exception {
+        return signObject(payload);
     }
 
     public boolean verifyTicket(Ticket ticket, String signatureBase64) throws Exception {
@@ -92,5 +104,14 @@ public class SignatureService {
 
         byte[] sigBytes = Base64.getDecoder().decode(signatureBase64);
         return signature.verify(sigBytes);
+    }
+
+    private String signObject(Object payload) throws Exception {
+        String json = objectMapper.writeValueAsString(payload);
+        Signature signature = Signature.getInstance("SHA256withRSA");
+        signature.initSign(privateKey);
+        signature.update(json.getBytes(StandardCharsets.UTF_8));
+        byte[] signed = signature.sign();
+        return Base64.getEncoder().encodeToString(signed);
     }
 }

@@ -3,8 +3,10 @@ package com.example.photoprintapplication1.config;
 import com.example.photoprintapplication1.service.CustomUserDetailsService;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -15,6 +17,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 
 @Configuration
 @EnableWebSecurity
+@EnableMethodSecurity
 public class SecurityConfig {
 
     private final CustomUserDetailsService customUserDetailsService;
@@ -45,6 +48,12 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/login","/api/auth/**").permitAll()
                         .requestMatchers("/api/license", "/api/license/create").hasRole("ADMIN")
                         .requestMatchers("/api/license/activate", "/api/license/check", "/api/license/renew").hasAnyRole("USER", "ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/signatures/full", "/api/signatures/increment").hasAnyRole("USER", "ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/signatures/by-ids").hasAnyRole("USER", "ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/signatures").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PUT, "/api/signatures/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/api/signatures/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/signatures/*/history", "/api/signatures/*/audit").hasRole("ADMIN")
                         .requestMatchers("/error").permitAll()
                         .anyRequest().authenticated()
                 )
