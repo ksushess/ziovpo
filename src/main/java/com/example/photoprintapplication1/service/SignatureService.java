@@ -95,6 +95,13 @@ public class SignatureService {
         return signObject(payload);
     }
 
+    public byte[] signBytes(byte[] payloadBytes) throws Exception {
+        Signature signature = Signature.getInstance("SHA256withRSA");
+        signature.initSign(privateKey);
+        signature.update(payloadBytes);
+        return signature.sign();
+    }
+
     public boolean verifyTicket(Ticket ticket, String signatureBase64) throws Exception {
         String json = objectMapper.writeValueAsString(ticket);
 
@@ -108,10 +115,7 @@ public class SignatureService {
 
     private String signObject(Object payload) throws Exception {
         String json = objectMapper.writeValueAsString(payload);
-        Signature signature = Signature.getInstance("SHA256withRSA");
-        signature.initSign(privateKey);
-        signature.update(json.getBytes(StandardCharsets.UTF_8));
-        byte[] signed = signature.sign();
+        byte[] signed = signBytes(json.getBytes(StandardCharsets.UTF_8));
         return Base64.getEncoder().encodeToString(signed);
     }
 }

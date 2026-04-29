@@ -54,6 +54,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.PUT, "/api/signatures/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/api/signatures/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.GET, "/api/signatures/*/history", "/api/signatures/*/audit").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/binary/signatures/full", "/api/binary/signatures/increment").hasAnyRole("USER", "ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/binary/signatures/by-ids").hasAnyRole("USER", "ADMIN")
                         .requestMatchers("/error").permitAll()
                         .anyRequest().authenticated()
                 )
